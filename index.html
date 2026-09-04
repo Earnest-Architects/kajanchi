@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Kajanchi Virtual Tour | Earnest Architects</title>
+<meta name="description" content="Kajanchi - 360° バーチャルツアー by Earnest Architects." />
+
+<link rel="icon" href="favicon/favicon.ico" sizes="any">
+<link rel="icon" href="favicon/favicon-32x32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="favicon/favicon-16x16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="favicon/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="lib/pannellum.css" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div id="app">
+
+  <div id="panorama" role="application" aria-label="Panorama 360 derajat, seret untuk melihat sekeliling"></div>
+
+  <div id="loading-screen">
+    <div class="brand-reveal">
+      <span class="brand-line" aria-hidden="true"></span>
+      <img
+        class="brand-mark"
+        src="brand/earnest-logo-light.png"
+        alt="Earnest Architects"
+        width="691"
+        height="99"
+      />
+      <span class="brand-line" aria-hidden="true"></span>
+    </div>
+    <div class="loading-progress">
+      <div class="loading-ring" aria-hidden="true"></div>
+      <p id="loading-text">パノラマを読み込み中…</p>
+    </div>
+  </div>
+
+  <header class="hud-top">
+    <p class="eyebrow" id="scene-title">診察室</p>
+    <h1 id="project-title">Kajanchi Virtual Tour</h1>
+  </header>
+
+  <div class="top-controls">
+    <button id="share-btn" class="control-btn" aria-label="リンクをシェア" title="シェア">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="18" cy="5" r="3"/>
+        <circle cx="6" cy="12" r="3"/>
+        <circle cx="18" cy="19" r="3"/>
+        <line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/>
+        <line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/>
+      </svg>
+    </button>
+    <button id="vr-btn" class="control-btn" aria-label="VRで見る" title="VRで見る">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="7" width="20" height="10" rx="4"/>
+        <circle cx="8" cy="12" r="1.6"/>
+        <circle cx="16" cy="12" r="1.6"/>
+        <path d="M10.4 12h3.2"/>
+        <path d="M6 8.5 3 6"/>
+        <path d="M18 8.5 21 6"/>
+      </svg>
+    </button>
+    <button id="fullscreen-btn" class="control-btn" aria-label="全画面" title="全画面">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/>
+      </svg>
+    </button>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- ============ Floorplan (bottom-right) ============ -->
+  <div class="nav-panel">
+    <div class="floorplan-panel" id="floorplan-panel">
+      <div class="floorplan-header">
+        <p class="floorplan-title">平面図</p>
+        <button id="floorplan-hide-btn" class="icon-btn" aria-label="平面図を隠す" title="平面図を隠す">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="floor-tabs" id="floor-tabs" role="tablist" aria-label="階を選択"></div>
+
+      <div class="floorplan-viewport" id="floorplan-viewport">
+        <div class="floorplan-canvas" id="floorplan-canvas">
+          <img id="floorplan-img" src="assets/floorplan.jpg" alt="1階の平面図と視点" draggable="false" />
+          <!-- viewpoint dots diinjeksikan oleh js/floorplan.js -->
+        </div>
+      </div>
+
+      <div class="floorplan-zoom-controls">
+        <button type="button" id="zoom-out-btn" class="zoom-btn" aria-label="縮小" title="縮小">−</button>
+        <button type="button" id="zoom-reset-btn" class="zoom-btn zoom-reset" aria-label="ズームをリセット" title="リセット">1×</button>
+        <button type="button" id="zoom-in-btn" class="zoom-btn" aria-label="拡大" title="拡大">+</button>
+      </div>
+    </div>
+
+    <button id="floorplan-show-btn" class="icon-btn floorplan-show-btn" aria-label="平面図を表示" title="平面図を表示">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <path d="M9 3v18M3 9h6"/>
+      </svg>
+    </button>
+  </div>
+
+</div>
+
+<script src="lib/pannellum.js"></script>
+
+<!--
+  Semua modul di bawah ini adalah ES Module (type="module"), jadi
+  urutan tag TIDAK memengaruhi urutan eksekusi internalnya — setiap
+  modul mengimpor dependensinya sendiri lewat "import" di dalam file
+  js/*.js, dan browser otomatis memuatnya dengan urutan yang benar.
+
+  Konten tur (lantai, denah, gambar 360, pitch point) ada semuanya
+  di js/content.js — file itu satu-satunya yang perlu diedit untuk
+  menambah/mengubah konten tur.
+-->
+<script type="module" src="js/viewer.js"></script>
+<script type="module" src="js/floorplan.js"></script>
+</body>
+</html>

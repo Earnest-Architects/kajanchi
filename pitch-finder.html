@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pitch Finder — cari koordinat pitch/yaw</title>
+
+<link rel="icon" href="favicon/favicon.ico" sizes="any">
+<link rel="icon" href="favicon/favicon-32x32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="favicon/favicon-16x16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="favicon/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="lib/pannellum.css" />
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/pitch-finder.css" />
+</head>
+<body>
+
+<div id="finder-app">
+
+  <div id="panorama"></div>
+
+  <div id="sidebar">
+    <p class="finder-title">📍 Pitch Finder</p>
+    <p class="finder-hint">
+      Pilih gambar 360. Pakai tombol mode di bawah: <b>Rotasi</b> untuk
+      lihat sekeliling, <b>Ambil Titik</b> untuk klik & simpan koordinat
+      pitch/yaw. Saat salah satu mode aktif, mode lainnya benar-benar mati.
+    </p>
+
+    <div class="finder-field">
+      <label>Mode</label>
+      <div class="mode-toggle" role="group" aria-label="Mode interaksi panorama">
+        <button type="button" id="mode-rotate-btn" class="mode-btn" aria-pressed="false">🔄 Rotasi</button>
+        <button type="button" id="mode-point-btn" class="mode-btn" aria-pressed="false">📍 Ambil Titik</button>
+      </div>
+    </div>
+
+    <div class="finder-field">
+      <label for="view-select">Gambar 360</label>
+      <select id="view-select" class="finder-select"></select>
+    </div>
+
+    <div class="finder-field">
+      <label for="target-select">Target (untuk titik yang akan ditambahkan)</label>
+      <select id="target-select" class="finder-select"></select>
+    </div>
+
+    <div id="coord-display">
+      <span class="placeholder">Klik di dalam gambar 360 untuk melihat pitch &amp; yaw…</span>
+    </div>
+
+    <div class="point-list-header">
+      <p>Daftar titik (sesi ini)</p>
+    </div>
+    <div id="point-list"></div>
+    <p class="point-empty" id="point-empty">Belum ada titik ditambahkan.</p>
+
+    <button type="button" id="copy-all-btn">Copy sebagai kode pitchPoints</button>
+    <textarea id="snippet-output" readonly placeholder="Hasil copy akan muncul di sini…"></textarea>
+  </div>
+
+</div>
+
+<script src="lib/pannellum.js"></script>
+<script type="module" src="js/pitch-finder.js"></script>
+</body>
+</html>
