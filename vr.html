@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>VR Tour | Earnest Architects</title>
+<meta name="description" content="360 virtual tour - VR headset version by Earnest Architects." />
+
+<link rel="icon" href="favicon/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="favicon/apple-touch-icon.png">
+
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<link rel="stylesheet" href="css/vr.css" />
+</head>
+<body>
+
+<a id="back-link" href="index.html">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M15 18l-6-6 6-6"/>
+  </svg>
+  Back to tour
+</a>
+
+<p id="vr-hint">Put on your headset and tap "Enter VR" in the bottom-right corner &middot; look around to find the room menu</p>
+
+<a-scene loading-screen="dotsColor: white; backgroundColor: #101010" vr-mode-ui="enabled: true">
+
+  <a-sky id="sky" src="" rotation="0 -90 0"></a-sky>
+
+  <!-- Panel menu ruangan, diisi otomatis oleh js/vr.js dari data content.js -->
+  <a-entity id="menu"></a-entity>
+
+  <a-entity id="cameraRig" position="0 1.6 0">
+    <a-camera id="camera" look-controls wasd-controls="enabled: false" position="0 0 0">
+      <a-cursor
+        fuse="true"
+        fuse-timeout="900"
+        raycaster="objects: .clickable"
+        geometry="primitive: ring; radiusInner: 0.008; radiusOuter: 0.012"
+        material="color: #f5f2ea; shader: flat; opacity: 0.9">
+      </a-cursor>
+    </a-camera>
+  </a-entity>
+
+  <!-- Kontroler Quest/headset lain: laser pointer otomatis muncul kalau ada controller -->
+  <a-entity laser-controls="hand: left" raycaster="objects: .clickable; far: 10"></a-entity>
+  <a-entity laser-controls="hand: right" raycaster="objects: .clickable; far: 10"></a-entity>
+
+</a-scene>
+
+<script type="module" src="js/vr.js"></script>
+</body>
+</html>
