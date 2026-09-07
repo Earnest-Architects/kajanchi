@@ -21,14 +21,14 @@
   Back to tour
 </a>
 
-<p id="vr-hint">Put on your headset and tap "Enter VR" in the bottom-right corner &middot; look around to find the room menu</p>
+<p id="vr-hint">Put on your headset and tap "Enter VR" in the bottom-right corner &middot; look at a ring hotspot to move, use the bar on the right to zoom</p>
 
 <a-scene loading-screen="dotsColor: white; backgroundColor: #101010" vr-mode-ui="enabled: true">
 
   <a-sky id="sky" src="" rotation="0 -90 0"></a-sky>
 
-  <!-- Panel menu ruangan, diisi otomatis oleh js/vr.js dari data content.js -->
-  <a-entity id="menu"></a-entity>
+  <!-- Hotspot navigasi (dari pitchPoints di content.js), diisi otomatis oleh js/vr.js -->
+  <a-entity id="hotspots"></a-entity>
 
   <a-entity id="cameraRig" position="0 1.6 0">
     <a-camera id="camera" look-controls wasd-controls="enabled: false" position="0 0 0">
@@ -39,6 +39,8 @@
         geometry="primitive: ring; radiusInner: 0.008; radiusOuter: 0.012"
         material="color: #f5f2ea; shader: flat; opacity: 0.9">
       </a-cursor>
+      <!-- Zoom HUD: bar vertikal mirip volume, menempel di sudut pandang, diisi oleh js/vr.js -->
+      <a-entity id="zoomHud" position="0.6 -0.25 -1"></a-entity>
     </a-camera>
   </a-entity>
 
