@@ -32,21 +32,42 @@ AFRAME.registerComponent("face-point", {
 });
 
 /* ---------- Util: pitch/yaw (derajat) -> posisi 3D di bola langit ----------
-   SKY_YAW_OFFSET harus sama dengan rotation Y pada <a-sky> di vr.html
-   (saat ini "0 -90 0"). Ini kalibrasi supaya hotspot yang dihitung dari
-   pitch/yaw content.js nempel di tempat yang SAMA PERSIS seperti yang
-   muncul di tampilan web (Pannellum). Kalau posisi hotspot di headset
-   kerasa "muter"/tidak pas, cukup ubah angka ini saja — rumus di
-   bawah tidak perlu diutak-atik. */
-const SKY_YAW_OFFSET = -90;
+   BUG LAMA: offset yaw sky ditambahkan langsung ke sudut sebelum sin/cos
+   ("yaw + SKY_YAW_OFFSET"). Itu bukan cara yang benar untuk "mengikuti"
+   rotasi <a-sky> — hasilnya adalah versi yang KEBALIK 180° dari posisi
+   yang seharusnya (titik antipodal), makanya ring hotspot muncul di
+   tempat yang berantakan/salah, dan otomatis susah diklik karena
+   pengguna melihat/mengarahkan cursor ke tempat yang sebenarnya
+   BUKAN posisi asli hotspot itu.
+
+   FIX: hitung dulu arah "asli" dari pitch/yaw (persis rumus yang
+   dipakai Pannellum secara internal), lalu terapkan ROTASI Y yang
+   SAMA PERSIS seperti rotation Y pada <a-sky> di vr.html (memakai
+   matriks rotasi Y yang benar, bukan sekadar tambah sudut). Dengan
+   begini hotspot akan selalu ikut kalau suatu saat rotation <a-sky>
+   diubah, tanpa perlu tebak-tebak tanda (+/-) lagi.
+
+   SKY_ROTATION_Y wajib sama dengan angka rotation Y pada <a-sky
+   id="sky" rotation="0 SKY_ROTATION_Y 0"> di vr.html. */
+const SKY_ROTATION_Y = -90;
 const HOTSPOT_RADIUS = 4.5;
 
 function pitchYawToPosition(pitch, yaw) {
-  const yawRad = ((yaw + SKY_YAW_OFFSET) * Math.PI) / 180;
   const pitchRad = (pitch * Math.PI) / 180;
-  const x = HOTSPOT_RADIUS * Math.cos(pitchRad) * Math.sin(yawRad);
+  const yawRad = (yaw * Math.PI) / 180;
+
+  // Arah asli (native), sebelum rotasi sky diterapkan
+  const nx = HOTSPOT_RADIUS * Math.cos(pitchRad) * Math.sin(yawRad);
+  const nz = -HOTSPOT_RADIUS * Math.cos(pitchRad) * Math.cos(yawRad);
+
+  // Rotasi Y yang identik dengan rotation Y pada <a-sky>
+  const rot = (SKY_ROTATION_Y * Math.PI) / 180;
+  const cosR = Math.cos(rot);
+  const sinR = Math.sin(rot);
+  const x = nx * cosR + nz * sinR;
+  const z = -nx * sinR + nz * cosR;
   const y = 1.6 + HOTSPOT_RADIUS * Math.sin(pitchRad);
-  const z = -HOTSPOT_RADIUS * Math.cos(pitchRad) * Math.cos(yawRad);
+
   return { x, y, z };
 }
 
@@ -72,23 +93,31 @@ function buildHotspots(view) {
     const { x, y, z } = pitchYawToPosition(p.pitch, p.yaw);
     const label = p.label || (findView(p.target) || {}).title || "";
 
+    /* Wrapper: cuma untuk posisi + menghadap ke user. TIDAK punya
+       geometry sendiri, dan karena itu TIDAK diberi class "clickable"
+       — supaya tidak ada elemen tanpa mesh yang "mengklaim" bisa
+       diklik padahal raycaster tidak akan pernah kena dia. */
     const hotspot = document.createElement("a-entity");
     hotspot.setAttribute("position", `${x} ${y} ${z}`);
     hotspot.setAttribute("face-point", "x: 0; y: 1.6; z: 0");
-    hotspot.classList.add("clickable");
 
-    /* Ring luar — warna sama seperti --accent (#7fa4d6) di web */
+    /* Ring luar adalah entity UTAMA yang bisa diklik: dia yang punya
+       geometry (jadi target nyata buat raycaster ".clickable"), class
+       "clickable", DAN event listener-nya sekaligus — tidak
+       bergantung pada bubbling event dari child element mana pun. */
     const ring = document.createElement("a-entity");
+    ring.classList.add("clickable");
     ring.setAttribute("geometry", "primitive: ring; radiusInner: 0.16; radiusOuter: 0.2; segmentsTheta: 32");
     ring.setAttribute("material", "color: #7fa4d6; shader: flat; opacity: 0.85; side: double");
     hotspot.appendChild(ring);
 
-    /* Titik tengah — warna sama seperti --paper (#eef2f8) di web */
+    /* Titik tengah — warna sama seperti --paper (#eef2f8) di web.
+       Hanya visual, jadi tidak perlu class/listener sendiri. */
     const dot = document.createElement("a-entity");
     dot.setAttribute("geometry", "primitive: circle; radius: 0.07; segments: 24");
     dot.setAttribute("material", "color: #eef2f8; shader: flat; opacity: 0.9; side: double");
     dot.setAttribute("position", "0 0 0.001");
-    hotspot.appendChild(dot);
+    ring.appendChild(dot);
 
     /* Label nama ruangan tujuan, di bawah ring */
     const text = document.createElement("a-entity");
@@ -97,16 +126,16 @@ function buildHotspots(view) {
       `value: ${label}; align: center; color: #eef2f8; width: 2.4; wrapCount: 20`
     );
     text.setAttribute("position", "0 -0.32 0");
-    hotspot.appendChild(text);
+    ring.appendChild(text);
 
-    /* Efek hover kecil supaya jelas kalau hotspot bisa diklik */
-    hotspot.addEventListener("mouseenter", () => {
-      hotspot.setAttribute("scale", "1.18 1.18 1.18");
+    /* Efek hover + klik langsung di entity yang sama dengan raycast target */
+    ring.addEventListener("mouseenter", () => {
+      ring.setAttribute("scale", "1.18 1.18 1.18");
     });
-    hotspot.addEventListener("mouseleave", () => {
-      hotspot.setAttribute("scale", "1 1 1");
+    ring.addEventListener("mouseleave", () => {
+      ring.setAttribute("scale", "1 1 1");
     });
-    hotspot.addEventListener("click", () => loadScene(p.target));
+    ring.addEventListener("click", () => loadScene(p.target));
 
     hotspots.appendChild(hotspot);
   });
@@ -154,20 +183,30 @@ function updateFill() {
 function buildZoomHud() {
   zoomHud.innerHTML = "";
 
-  /* Track/rel bar */
+  /* Track/rel bar — dibuat cukup transparan secara default supaya
+     tidak "berat" menghalangi pandangan; jadi lebih terlihat hanya
+     saat cursor benar-benar diarahkan ke sana (mouseenter/leave). */
   const track = document.createElement("a-plane");
   track.setAttribute("width", "0.045");
   track.setAttribute("height", TRACK_HEIGHT);
   track.setAttribute("color", "#161616");
-  track.setAttribute("opacity", "0.55");
+  track.setAttribute("opacity", "0.28");
   track.classList.add("clickable");
+  track.addEventListener("mouseenter", () => {
+    track.setAttribute("opacity", "0.6");
+    fill.setAttribute("opacity", "0.95");
+  });
+  track.addEventListener("mouseleave", () => {
+    track.setAttribute("opacity", "0.28");
+    fill.setAttribute("opacity", "0.55");
+  });
   zoomHud.appendChild(track);
 
   /* Isi bar (menunjukkan level zoom saat ini, seperti volume) */
   const fillEl = document.createElement("a-plane");
   fillEl.setAttribute("width", "0.045");
   fillEl.setAttribute("color", "#7fa4d6");
-  fillEl.setAttribute("opacity", "0.9");
+  fillEl.setAttribute("opacity", "0.55");
   zoomHud.appendChild(fillEl);
   fill = fillEl;
 
@@ -176,7 +215,9 @@ function buildZoomHud() {
   plusBtn.setAttribute("position", `0 ${TRACK_HEIGHT / 2 + 0.09} 0`);
   plusBtn.classList.add("clickable");
   plusBtn.setAttribute("geometry", "primitive: circle; radius: 0.055; segments: 20");
-  plusBtn.setAttribute("material", "color: #161616; opacity: 0.7; side: double");
+  plusBtn.setAttribute("material", "color: #161616; opacity: 0.4; side: double");
+  plusBtn.addEventListener("mouseenter", () => plusBtn.setAttribute("material", "opacity", 0.75));
+  plusBtn.addEventListener("mouseleave", () => plusBtn.setAttribute("material", "opacity", 0.4));
   const plusLabel = document.createElement("a-entity");
   plusLabel.setAttribute("text", "value: +; align: center; color: #eef2f8; width: 2.4");
   plusLabel.setAttribute("position", "0 0 0.001");
@@ -189,7 +230,9 @@ function buildZoomHud() {
   minusBtn.setAttribute("position", `0 ${-TRACK_HEIGHT / 2 - 0.09} 0`);
   minusBtn.classList.add("clickable");
   minusBtn.setAttribute("geometry", "primitive: circle; radius: 0.055; segments: 20");
-  minusBtn.setAttribute("material", "color: #161616; opacity: 0.7; side: double");
+  minusBtn.setAttribute("material", "color: #161616; opacity: 0.4; side: double");
+  minusBtn.addEventListener("mouseenter", () => minusBtn.setAttribute("material", "opacity", 0.75));
+  minusBtn.addEventListener("mouseleave", () => minusBtn.setAttribute("material", "opacity", 0.4));
   const minusLabel = document.createElement("a-entity");
   minusLabel.setAttribute("text", "value: -; align: center; color: #eef2f8; width: 2.4");
   minusLabel.setAttribute("position", "0 0 0.001");
